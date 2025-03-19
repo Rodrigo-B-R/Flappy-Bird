@@ -2,6 +2,7 @@ import pygame
 import sys
 import os
 import random 
+ 
 
 pygame.init()
 
@@ -13,9 +14,16 @@ screen = pygame.display.set_mode(size)
 
 font= pygame.font.Font(None, 50 )
 
+
 bird_surface = pygame.transform.scale(pygame.image.load(os.path.join('images','bird.png')).convert_alpha(),(100,100))
 background_surface= pygame.transform.scale(pygame.image.load(os.path.join('images','background.png')),(width,height))
 text_surface =   font.render('Flappy Bird', True  , 'Green')
+
+
+tube_list= []
+
+SPAWN_PIPE= pygame.USEREVENT+1 #create a pygame event and call it every 5 seconds
+pygame.time.set_timer(SPAWN_PIPE,1000)
 
 
 def pipes():
@@ -34,29 +42,33 @@ def pipes():
     upper_tube_surface= pygame.transform.scale(pygame.image.load(os.path.join('images','tube_image_rotated.png')),(tube_width, upper_tube_height))
     lower_tube_surface= pygame.transform.scale(pygame.image.load(os.path.join('images','tube_image.png')),(tube_width, lower_tube_height))  
 
-    return [upper_tube_surface,lower_tube_surface,lower_position]
+    tube_list.append({"Top Tube":upper_tube_surface,"Bottom Tube": lower_tube_surface,"x": width , 'y': lower_position })
+    #create a list containing a dictionary with the values and add each new tube to the list
+   
 
 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
+        if event.type ==  SPAWN_PIPE: #the pygame event calls the pipe function wich will add a new pipe to the list
+            pipes()
 
-        # if event.type == pygame.K_SPACE:
 
-
-    
-    
-    upper_tube, lower_tube, lower_position = pipes()
-    # pygame.Surface.convert_alpha()
     screen.blit(background_surface,(0,0))
 
-    screen.blit(upper_tube,(500,0)) #upper tube
-    screen.blit(lower_tube,(500,lower_position)) #lower tube
+    for tube in tube_list: 
+        screen.blit(tube['Top Tube'],(tube['x'], 0))
+        screen.blit(tube['Bottom Tube'],(tube['x'], tube['y']))
+        tube['x'] -= 5
+        
+
+    tube_list = [tube for tube in tube_list if tube["x"] > - int(width/8)]
+
     screen.blit(text_surface,(200,200))
     screen.blit(bird_surface, (200,350))
     
     pygame.display.update()
-    clock.tick(1)
+    clock.tick(60)
 
 
 
