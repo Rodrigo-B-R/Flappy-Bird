@@ -15,11 +15,7 @@ screen = pygame.display.set_mode(size)
 
 
 
-#bird physics
-seconds=0  
-g= 1.5
-flap_strength = -7
-bird_velocity_y = 0
+#bird initial position
 bird_position_y= 350
 bird_position_x=200
 
@@ -33,7 +29,8 @@ background_surface= pygame.transform.scale(pygame.image.load(os.path.join('image
 #lose text
 font = pygame.font.Font(None,50)
 lose_surface= font.render('YOU LOST', True, (255, 0, 0))
-score=0
+restart_surface= font.render('Press R to restart',True, (255, 0, 0))
+
 
 
 
@@ -46,7 +43,7 @@ pygame.time.set_timer(SPAWN_PIPE,2500)
 tube_width=int(width/10)
 
 #function that generates tubes randomely within certain parameters
-def pipes():
+def pipes(tube_list):
     gap= int(height/4)
 
     min_height= int(height/8)
@@ -75,74 +72,96 @@ def pipes():
 
 
 lost=False
+score=0
 
-while True:
-    score_surface= font.render('Score: '+ str(math.ceil(score)),True,(0,0,0))
+def run_game():
     
-    #checks for keyboard inputs and spawns pipes every time it detects the user event
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT: sys.exit()
-        if event.type ==  SPAWN_PIPE: #the pygame event calls the pipe function wich will add a new pipe to the list
-            pipes()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and not lost: 
-                bird_velocity_y = flap_strength
-                seconds=0
+    global bird_position_y
 
-    
-    dt = clock.tick(60) / 1000  
+    #bird physics
+    seconds=0  
+    g= 1.5
+    flap_strength = -7
+    bird_velocity_y = 0
+    lost=False
+    score=0
+    tube_list=[]
 
-    screen.blit(background_surface,(0,0))
-
-    #iterates trough the tubes list and moves them left 
-    for tube in tube_list: 
+    while True:
+        score_surface= font.render('Score: '+ str(math.ceil(score)),True,(0,0,0))
         
-        if not lost:
+        #checks for keyboard inputs and spawns pipes every time it detects the user event
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: sys.exit()
+            if event.type ==  SPAWN_PIPE: #the pygame event calls the pipe function wich will add a new pipe to the list
+                pipes(tube_list)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and not lost: 
+                    bird_velocity_y = flap_strength
+                    seconds=0
+                if event.key == pygame.K_r and lost:
+                    tube_list=[]
+                    bird_position_y=350
+                    run_game()
 
-            tube['upper_rect'].x -=5 
-            tube['lower_rect'].x -=5 
-            tube['score rect'].x -=5
+        
+        dt = clock.tick(60) / 1000  
+
+        screen.blit(background_surface,(0,0))
+
+        #iterates trough the tubes list and moves them left 
+        for tube in tube_list: 
+            
+            if not lost:
+
+                tube['upper_rect'].x -=5 
+                tube['lower_rect'].x -=5 
+                tube['score rect'].x -=5
 
 
-            tube['upper_rect'].topleft =(tube['upper_rect'].x,tube['upper_rect'].y) #update the position of the rectangle
-            tube['lower_rect'].topleft =(tube['lower_rect'].x,tube['lower_rect'].y)
-            tube['score rect'].topleft =(tube['score rect'].x,tube['score rect'].y)
+                tube['upper_rect'].topleft =(tube['upper_rect'].x,tube['upper_rect'].y) #update the position of the rectangle
+                tube['lower_rect'].topleft =(tube['lower_rect'].x,tube['lower_rect'].y)
+                tube['score rect'].topleft =(tube['score rect'].x,tube['score rect'].y)
 
-            if bird_rect.colliderect(tube['score rect']):
-                score += 1/6
+                if bird_rect.colliderect(tube['score rect']):
+                    score += 1/6
 
-        screen.blit(tube['Top Tube'],tube['upper_rect']) #(surface, rectangle)
-        screen.blit(tube['Bottom Tube'], tube['lower_rect'])
+            screen.blit(tube['Top Tube'],tube['upper_rect']) #(surface, rectangle)
+            screen.blit(tube['Bottom Tube'], tube['lower_rect'])
 
-      
-    
+        
+        
 
-    tube_list = [tube for tube in tube_list if tube["upper_rect"].x > - int(tube_width)] #delete tubes after they have passed the screen
+        tube_list = [tube for tube in tube_list if tube["upper_rect"].x > - int(tube_width)] #delete tubes after they have passed the screen
 
-    #jumping physics
-    seconds += dt
-    bird_velocity_y += g * seconds
-    bird_position_y += bird_velocity_y 
+        #jumping physics
+        seconds += dt
+        bird_velocity_y += g * seconds
+        bird_position_y += bird_velocity_y 
 
-    # if bird_position_y > height: sys.exit()
+        
 
-    
-    #updates score
-    screen.blit(score_surface,(int(width/2.5), 10))
+        
+        #updates score
+        screen.blit(score_surface,(int(width/2.5), 10))
 
-    #updates bird position
-    bird_rect.center=(200,bird_position_y)
-    screen.blit(bird_surface, bird_rect)
+        #updates bird position
+        bird_rect.center=(200,bird_position_y)
+        screen.blit(bird_surface, bird_rect)
 
-    #handles losing when detecting a collision
-    for i, tube in enumerate(tube_list):
-        if bird_rect.colliderect(tube['upper_rect']) or bird_rect.colliderect(tube['lower_rect']):
-            screen.blit(lose_surface,(int(width/2.5),int(height/4)))
-            lost= True
-            break
+        #handles losing when detecting a collision
+        for i, tube in enumerate(tube_list):
+            if bird_rect.colliderect(tube['upper_rect']) or bird_rect.colliderect(tube['lower_rect']) or bird_position_y > height:
+                screen.blit(lose_surface,(int(width/2.5),int(height/4)))
+                screen.blit(restart_surface,(int(width/2.5)-50,int(height/4)+40))
+                lost= True
+                break
 
-    pygame.display.update()
-    clock.tick(60)
+        pygame.display.update()
+        clock.tick(60)
+
+
+run_game()
 
 
 
