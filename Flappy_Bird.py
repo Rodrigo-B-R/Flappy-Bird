@@ -71,8 +71,7 @@ def pipes(tube_list):
 
 
 
-lost=False
-score=0
+
 
 def run_game():
     
